@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⏰ Завод будильника СамГТУ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>⏰ Завод будильника</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -14,63 +15,70 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 24px;
+            padding: 20px;
             text-align: center;
         }
         .card {
             background: #1e293b;
             border: 1px solid #334155;
-            border-radius: 20px;
-            padding: 32px 24px;
-            max-width: 400px;
+            border-radius: 24px;
+            padding: 32px 20px;
+            max-width: 360px;
             width: 100%;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
         }
         .time-badge {
-            font-size: 48px;
+            font-size: 52px;
             font-weight: 800;
             color: #38bdf8;
-            margin: 16px 0;
+            margin: 12px 0 8px 0;
             letter-spacing: 2px;
         }
         .desc {
             color: #94a3b8;
             font-size: 15px;
-            margin-bottom: 24px;
-            line-height: 1.5;
+            margin-bottom: 28px;
         }
         .btn {
             display: block;
             width: 100%;
             padding: 16px 20px;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 17px;
             font-weight: 700;
             text-decoration: none;
             margin-bottom: 12px;
-            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
         }
-        .btn-sleep {
+        .btn-main {
             background: #0284c7;
             color: white;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
         }
-        .btn-standard {
+        .btn-sub {
             background: #334155;
-            color: #cbd5e1;
+            color: #94a3b8;
+            font-size: 14px;
+            padding: 12px;
         }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>⏰ Завод будильника</h2>
+        <h3 style="color:#94a3b8; font-weight:600;">СамГТУ Умный Будильник</h3>
         <div id="time" class="time-badge">07:40</div>
-        <p id="label" class="desc">СамГТУ (ОФП в 1 корп)</p>
+        <p id="label" class="desc">ОФП в 1 корпусе</p>
 
-        <a id="btn-sleep" class="btn btn-sleep" href="#">Открыть в Sleep as Android</a>
-        <a id="btn-standard" class="btn btn-standard" href="#">Открыть в обычных Часах</a>
+        <button id="btn-set" class="btn btn-main" onclick="openAlarm()">⏰ Завести будильник</button>
+        <button id="btn-close" class="btn btn-sub" onclick="closeWebApp()">Закрыть</button>
     </div>
 
     <script>
+        if (window.Telegram && window.Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+        }
+
         const params = new URLSearchParams(window.location.search);
         const h = parseInt(params.get('h') || '7');
         const m = parseInt(params.get('m') || '40');
@@ -80,16 +88,22 @@
         document.getElementById('time').innerText = timeStr;
         document.getElementById('label').innerText = labelText;
 
-        // Sleep as Android intent (with 30m smart window)
-        const sleepIntent = `intent:#Intent;action=com.urbandroid.sleep.alarm.SET_ALARM;i.hour=${h};i.minute=${m};i.smart_period=30;S.alarm_label=${encodeURIComponent(labelText)};package=com.urbandroid.sleep;end`;
-        // Standard Android alarm clock intent
-        const standardIntent = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${h};i.android.intent.extra.alarm.MINUTES=${m};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(labelText)};B.android.intent.extra.alarm.SKIP_UI=true;end`;
+        function openAlarm() {
+            // Standard Android SET_ALARM activity intent (never opens Play Store)
+            const intentUrl = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${h};i.android.intent.extra.alarm.MINUTES=${m};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(labelText)};B.android.intent.extra.alarm.SKIP_UI=true;end`;
+            window.location.href = intentUrl;
+        }
 
-        document.getElementById('btn-sleep').href = sleepIntent;
-        document.getElementById('btn-standard').href = standardIntent;
+        function closeWebApp() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                Telegram.WebApp.close();
+            } else {
+                window.close();
+            }
+        }
 
-        // Auto trigger primary intent
-        window.location.href = sleepIntent;
+        // Auto trigger on load with slight delay so Telegram WebApp finishes init
+        setTimeout(openAlarm, 300);
     </script>
 </body>
 </html>
